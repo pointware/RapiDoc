@@ -459,6 +459,7 @@ function mergePropertyExamples(obj, propertyName, propExamples) {
   const mergedObj = {};
   for (const exampleKey in obj) {
     for (const propExampleKey in propExamples) {
+      // 이름을 바꿔보자
       mergedObj[`example-${i}`] = { ...obj[exampleKey] };
       mergedObj[`example-${i}`][propertyName] = propExamples[propExampleKey];
       i++;

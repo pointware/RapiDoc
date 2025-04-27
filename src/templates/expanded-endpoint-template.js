@@ -159,11 +159,13 @@ export function expandedEndpointBodyTemplate(path, tagName = '', tagDescription 
           schema-style = "${this.schemaStyle}"
           active-schema-tab = "${this.defaultSchemaTab}"
           schema-expand-level = "${this.schemaExpandLevel}"
+          custom-tab = "${this.customTab}"
           schema-description-expanded = "${this.schemaDescriptionExpanded}"
           allow-schema-description-expand-toggle = "${this.allowSchemaDescriptionExpandToggle}"
           schema-hide-read-only = "${this.schemaHideReadOnly === 'never' ? 'false' : path.isWebhook ? 'true' : 'false'}"
           schema-hide-write-only = "${this.schemaHideWriteOnly === 'never' ? 'false' : path.isWebhook ? 'false' : 'true'}"
           selected-status = "${Object.keys(path.responses || {})[0] || ''}"
+          path = "${path.path}"
           exportparts = "btn:btn, btn-response-status:btn-response-status, btn-selected-response-status:btn-selected-response-status, btn-fill:btn-fill, btn-copy:btn-copy,
             tab-panel:tab-panel, tab-btn:tab-btn, tab-btn-row:tab-btn-row, tab-coontent:tab-content, 
             schema-description:schema-description, schema-multiline-toggle:schema-multiline-toggle"

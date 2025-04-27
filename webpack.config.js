@@ -37,7 +37,7 @@ const rapidocBanner = `
 const commonPlugins = [
   new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'] }),
   new webpack.HotModuleReplacementPlugin(),
-  new ESLintPlugin({ extensions: ['js'] }),
+  // new ESLintPlugin({ extensions: ['js'] }),
   new CleanWebpackPlugin(),
   new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 }),
   new HtmlWebpackPlugin({ template: 'index.html' }),

@@ -20,6 +20,7 @@ export default class ApiResponse extends LitElement {
     this.headersForEachRespStatus = {};
     this.mimeResponsesForEachStatus = {};
     this.activeSchemaTab = 'schema';
+    this.customTab = 'true';
   }
 
   static get properties() {
@@ -28,6 +29,8 @@ export default class ApiResponse extends LitElement {
       webhook: { type: String },
       responses: { type: Object },
       parser: { type: Object },
+      path: { type: String, attribute: 'path' },
+      customTab: { type: String, attribute: 'custom-tab' },
       schemaStyle: { type: String, attribute: 'schema-style' },
       renderStyle: { type: String, attribute: 'render-style' },
       selectedStatus: { type: String, attribute: 'selected-status' },
@@ -86,14 +89,14 @@ export default class ApiResponse extends LitElement {
 
   render() {
     return html`
-    <div class="col regular-font response-panel ${this.renderStyle}-mode">
-      <div class=" ${this.callback === 'true' ? 'tiny-title' : 'req-res-title'} "> 
-        ${this.callback === 'true' ? 'CALLBACK RESPONSE' : 'RESPONSE'}
-      </div>
-      <div>
-        ${this.responseTemplate()}
-      </div>  
-    </div>  
+        <div class="col regular-font response-panel ${this.renderStyle}-mode">
+            <div class=" ${this.callback === 'true' ? 'tiny-title' : 'req-res-title'} ">
+                ${this.callback === 'true' ? 'CALLBACK RESPONSE' : 'RESPONSE'}
+            </div>
+            <div>
+                ${this.responseTemplate()}
+            </div>
+        </div>
     `;
   }
 
@@ -142,91 +145,126 @@ export default class ApiResponse extends LitElement {
       this.headersForEachRespStatus[statusCode] = tempHeaders;
       this.mimeResponsesForEachStatus[statusCode] = allMimeResp;
     }
-    return html`
-      ${Object.keys(this.responses).length > 1
-        ? html`<div class='row' style='flex-wrap:wrap'>
-          ${Object.keys(this.responses).map((respStatus) => html`
-            ${respStatus === '$$ref' // Swagger-Client parser creates '$$ref' object if JSON references are used to create responses - this should be ignored
-              ? ''
-              : html`
-                <button 
-                  @click="${() => {
-                    this.selectedStatus = respStatus;
-                    if (this.responses[respStatus].content && Object.keys(this.responses[respStatus].content)[0]) {
-                      this.selectedMimeType = Object.keys(this.responses[respStatus].content)[0]; // eslint-disable-line prefer-destructuring
-                    } else {
-                      this.selectedMimeType = undefined;
-                    }
-                  }}"
-                  class='m-btn small ${this.selectedStatus === respStatus ? 'primary' : ''}'
-                  part="btn ${this.selectedStatus === respStatus ? 'btn-response-status btn-selected-response-status' : ' btn-response-status'}"
-                  style='margin: 8px 4px 0 0'
-                > 
-                  ${respStatus} 
-                </button>`
-              }`)
-          }</div>`
-        : html`<span>${Object.keys(this.responses)[0]}</span>`
-      }
 
-      ${Object.keys(this.responses).map((status) => html`
-        <div style = 'display: ${status === this.selectedStatus ? 'block' : 'none'}' >
-          <div class="top-gap">
-            <span class="resp-descr m-markdown ">${unsafeHTML(marked(this.responses[status]?.description || ''))}</span>
-            ${(this.headersForEachRespStatus[status] && this.headersForEachRespStatus[status]?.length > 0)
-              ? html`${this.responseHeaderListTemplate(this.headersForEachRespStatus[status])}`
-              : ''
-            }
-          </div>
-          ${Object.keys(this.mimeResponsesForEachStatus[status]).length === 0
-            ? ''
-            : html`  
-              <div part="tab-panel" class="tab-panel col">
-                <div part="tab-btn-row" class="tab-buttons row" @click="${(e) => { if (e.target.tagName.toLowerCase() === 'button') { this.activeSchemaTab = e.target.dataset.tab; } }}" >
-                  <button part="tab-btn" class="tab-btn ${this.activeSchemaTab === 'example' ? 'active' : ''}" data-tab = 'example'>EXAMPLE </button>
-                  <button part="tab-btn" class="tab-btn ${this.activeSchemaTab !== 'example' ? 'active' : ''}" data-tab = 'schema' >SCHEMA</button>
-                  <div style="flex:1"></div>
-                  ${Object.keys(this.mimeResponsesForEachStatus[status]).length === 1
-                    ? html`<span class='small-font-size gray-text' style='align-self:center; margin-top:8px;'> ${Object.keys(this.mimeResponsesForEachStatus[status])[0]} </span>`
-                    : html`${this.mimeTypeDropdownTemplate(Object.keys(this.mimeResponsesForEachStatus[status]))}`
-                  }
-                </div>
-                ${this.activeSchemaTab === 'example'
-                  ? html`<div part="tab-content" class ='tab-content col' style = 'flex:1;'>
-                      ${this.mimeExampleTemplate(this.mimeResponsesForEachStatus[status][this.selectedMimeType])}
+    return html`
+        ${Object.keys(this.responses).length > 1
+                ? html`
+                    <div class='row' style='flex-wrap:wrap'>
+                        ${Object.keys(this.responses)
+                                .map((respStatus) => html`
+                                    ${respStatus === '$$ref' // Swagger-Client parser creates '$$ref' object if JSON references are used to create responses - this should be ignored
+                                            ? ''
+                                            : html`
+                                                <button
+                                                        @click="${() => {
+                                                            this.selectedStatus = respStatus;
+                                                            if (this.responses[respStatus].content && Object.keys(this.responses[respStatus].content)[0]) {
+                                                                this.selectedMimeType = Object.keys(this.responses[respStatus].content)[0]; // eslint-disable-line prefer-destructuring
+                                                            } else {
+                                                                this.selectedMimeType = undefined;
+                                                            }
+                                                        }}"
+                                                        class='m-btn small ${this.selectedStatus === respStatus ? 'primary' : ''}'
+                                                        part="btn ${this.selectedStatus === respStatus ? 'btn-response-status btn-selected-response-status' : ' btn-response-status'}"
+                                                        style='margin: 8px 4px 0 0'
+                                                >
+                                                    ${respStatus}
+                                                </button>`
+                                    }`)
+                        }
                     </div>`
-                  : html`<div part="tab-content" class ='tab-content col' style = 'flex:1;'>
-                      ${this.mimeSchemaTemplate(this.mimeResponsesForEachStatus[status][this.selectedMimeType])}
-                    </div>`
-                }
-              </div>
-            `
-          }</div>`)
+                : html`<span>${Object.keys(this.responses)[0]}</span>`
         }
+
+        ${Object.keys(this.responses)
+                .map((status) => html`
+                    <div style='display: ${status === this.selectedStatus ? 'block' : 'none'}'>
+                        <div class="top-gap">
+                            <span class="resp-descr m-markdown ">${unsafeHTML(marked(this.responses[status]?.description || ''))}</span>
+                            ${(this.headersForEachRespStatus[status] && this.headersForEachRespStatus[status]?.length > 0)
+                                    ? html`${this.responseHeaderListTemplate(this.headersForEachRespStatus[status])}`
+                                    : ''
+                            }
+                        </div>${Object.keys(this.mimeResponsesForEachStatus[status]).length === 0
+                                ? ''
+                                : html`
+                                    <div part="tab-panel" class="tab-panel col">
+                                        <div part="tab-btn-row" class="tab-buttons row" @click="${(e) => {
+                                            if (e.target.tagName.toLowerCase() === 'button') {
+                                                this.activeSchemaTab = e.target.dataset.tab;
+                                                console.log('change schematab', this.activeSchemaTab);
+                                            }
+                                        }}">
+                                            <!-- custom tab 신설-->
+                                            ${this.customTab === 'true'
+                                                    ? html`
+                                                        <button part="tab-btn" class="tab-btn ${this.activeSchemaTab === 'custom' ? 'active' : ''}" data-tab="custom">CUSTOM</button>`
+                                                    : ''
+                                            }
+                                            <button part="tab-btn" class="tab-btn ${this.activeSchemaTab === 'example' ? 'active' : ''}" data-tab='example'>EXAMPLE</button>
+                                            <button part="tab-btn" class="tab-btn ${this.activeSchemaTab === 'schema' ? 'active' : ''}" data-tab='schema'>SCHEMA</button>
+                                            <div style="flex:1"></div>
+                                            ${Object.keys(this.mimeResponsesForEachStatus[status]).length === 1
+                                                    ? html`<span class='small-font-size gray-text' style='align-self:center; margin-top:8px;'> ${Object.keys(this.mimeResponsesForEachStatus[status])[0]} </span>`
+                                                    : html`${this.mimeTypeDropdownTemplate(Object.keys(this.mimeResponsesForEachStatus[status]))}`
+                                            }
+                                        </div>
+
+                                        ${this.activeSchemaTab === 'example'
+                                                ? html`
+                                                    <div part="tab-content" class='tab-content col' style='flex:1;'>
+                                                        ${this.mimeExampleTemplate(this.mimeResponsesForEachStatus[status][this.selectedMimeType])}
+                                                    </div>`
+                                                : (
+                                                        this.activeSchemaTab === 'schema'
+                                                                ? html`<div part="tab-content" class='tab-content col' style='flex:1;'>${this.mimeSchemaTemplate(this.mimeResponsesForEachStatus[status][this.selectedMimeType])}</div>`
+                                                                : html`<div part="tab-content" class='tab-content col' style='flex:1;'>${this.customTabTemplate(this.path, this.mimeResponsesForEachStatus[status][this.selectedMimeType])}</div>`
+                                                )
+                                        }
+                                    </div>
+                                `
+                        }
+                    </div>`)
+        }
+    `;
+  }
+
+  /**
+   * oneOf만 띄워본다.
+   * @param path
+   * @param mimeRespDetails
+   * @returns {TemplateResult<1>}
+   */
+  customTabTemplate(path, mimeRespDetails) {
+    // 200에 특정패스만
+
+    console.log(path, mimeRespDetails.schemaTree['::props']);
+    return html`
+        <h2>template</h2>
     `;
   }
 
   responseHeaderListTemplate(respHeaders) {
     return html`
-      <div style="padding:16px 0 8px 0" class="resp-headers small-font-size bold-text">RESPONSE HEADERS</div> 
-      <table role="presentation" style="border-collapse: collapse; margin-bottom:16px; border:1px solid var(--border-color); border-radius: var(--border-radius)" class="small-font-size mono-font">
-        ${respHeaders.map((v) => html`
-          <tr>
-            <td style="padding:8px; vertical-align: baseline; min-width:120px; border-top: 1px solid var(--light-border-color); text-overflow: ellipsis;">
-              ${v.name || ''}
-            </td> 
-            <td style="padding:4px; vertical-align: baseline; padding:0 5px; border-top: 1px solid var(--light-border-color); text-overflow: ellipsis;">
-              ${v.schema?.type || ''}
-            </td> 
-            <td style="padding:8px; vertical-align: baseline; border-top: 1px solid var(--light-border-color);text-overflow: ellipsis;">
-              <div class="m-markdown-small regular-font" >${unsafeHTML(marked(v.description || ''))}</div>
-            </td>
-            <td style="padding:8px; vertical-align: baseline; border-top: 1px solid var(--light-border-color); text-overflow: ellipsis;">
-              ${v.schema?.example || ''}
-            </td>
-          </tr>
-        `)}
-    </table>`;
+        <div style="padding:16px 0 8px 0" class="resp-headers small-font-size bold-text">RESPONSE HEADERS</div>
+        <table role="presentation" style="border-collapse: collapse; margin-bottom:16px; border:1px solid var(--border-color); border-radius: var(--border-radius)" class="small-font-size mono-font">
+            ${respHeaders.map((v) => html`
+                <tr>
+                    <td style="padding:8px; vertical-align: baseline; min-width:120px; border-top: 1px solid var(--light-border-color); text-overflow: ellipsis;">
+                        ${v.name || ''}
+                    </td>
+                    <td style="padding:4px; vertical-align: baseline; padding:0 5px; border-top: 1px solid var(--light-border-color); text-overflow: ellipsis;">
+                        ${v.schema?.type || ''}
+                    </td>
+                    <td style="padding:8px; vertical-align: baseline; border-top: 1px solid var(--light-border-color);text-overflow: ellipsis;">
+                        <div class="m-markdown-small regular-font">${unsafeHTML(marked(v.description || ''))}</div>
+                    </td>
+                    <td style="padding:8px; vertical-align: baseline; border-top: 1px solid var(--light-border-color); text-overflow: ellipsis;">
+                        ${v.schema?.example || ''}
+                    </td>
+                </tr>
+            `)}
+        </table>`;
   }
 
   mimeTypeDropdownTemplate(mimeTypes) {
@@ -299,6 +337,7 @@ export default class ApiResponse extends LitElement {
   }
 
   mimeSchemaTemplate(mimeRespDetails) {
+    console.log('mimeSchemaTemplate', this);
     if (!mimeRespDetails) {
       return html`
         <pre style='color:var(--red)' class = '${this.renderStyle === 'read' ? 'border pad-8-16' : 'border-top'}'> Schema not found</pre>
@@ -329,6 +368,9 @@ export default class ApiResponse extends LitElement {
       }`;
   }
   /* eslint-enable indent */
+
+  // 데이터를 던져주고 렌더링 하라고 하면 어떨까
+  //
 }
 
 // Register the element with the browser

@@ -52,6 +52,11 @@ export default class SchemaTable extends LitElement {
       .key.deprecated .key-label {
         color: var(--red);
       }
+          
+      .table .required {
+          white-space: normal;
+          width: 100px;      
+      }
 
       .table .key-type {
         white-space: normal;
@@ -106,6 +111,7 @@ export default class SchemaTable extends LitElement {
         <div style = 'border:1px solid var(--light-border-color)'>
           <div style='display:flex; background-color: var(--bg2); padding:8px 4px; border-bottom:1px solid var(--light-border-color);'>
             <div class='key' style='font-family:var(--font-regular); font-weight:bold; color:var(--fg);'> Field </div>
+              <div class="required" style='font-family:var(--font-regular); font-weight:bold; color:var(--fg);'> Required </div>
             <div class='key-type' style='font-family:var(--font-regular); font-weight:bold; color:var(--fg);'> Type </div>
             <div class='key-descr' style='font-family:var(--font-regular); font-weight:bold; color:var(--fg);'> Description </div>
           </div>
@@ -123,7 +129,7 @@ export default class SchemaTable extends LitElement {
     `;
   }
 
-  generateTree(data, dataType = 'object', arrayType = '', key = '', description = '', schemaLevel = 0, indentLevel = 0, readOrWrite = '', isDeprecated = false) {
+  generateTree(data, dataType = 'object', arrayType = '', key = '', description = '', schemaLevel = 0, indentLevel = 0, readOrWrite = '', isDeprecated = false, showRequired = true) {
     if (this.schemaHideReadOnly === 'true') {
       if (dataType === 'array') {
         if (readOrWrite === 'readonly') {
@@ -167,10 +173,12 @@ export default class SchemaTable extends LitElement {
     let keyLabel = '';
     let keyDescr = '';
     let isOneOfLabel = false;
+    let isOptionLabel = false;
     if (key.startsWith('::ONE~OF') || key.startsWith('::ANY~OF')) {
       keyLabel = key.replace('::', '').replace('~', ' ');
       isOneOfLabel = true;
     } else if (key.startsWith('::OPTION')) {
+      isOptionLabel = true;
       const parts = key.split('~');
       keyLabel = parts[1]; // eslint-disable-line prefer-destructuring
       keyDescr = parts[2]; // eslint-disable-line prefer-destructuring
@@ -178,10 +186,19 @@ export default class SchemaTable extends LitElement {
       keyLabel = key;
     }
 
+    let isRequired;
+    if (isOneOfLabel || isOptionLabel) {
+      isRequired = '';
+    } else if (keyLabel?.endsWith('*')) {
+      isRequired = 'O';
+    } else {
+      isRequired = '';
+    }
+
     let detailObjType = '';
     if (data['::type'] === 'object') {
       if (dataType === 'array') {
-        detailObjType = 'array of object'; // Array of Object
+        detailObjType = '[object]'; // Array of Object
       } else {
         detailObjType = data['::dataTypeLabel'] || data['::type'];
       }
@@ -213,7 +230,7 @@ export default class SchemaTable extends LitElement {
                     ? html`<span class="key-label" style="display:inline-block; margin-left:-6px;">${(isDeprecated || data['::deprecated'])
                       ? html`<svg viewBox="0 0 10 10" width="10" height="10" style="stroke:var(--red); margin-right:-6px"><path d="M2 2L8 8M2 8L8 2"/></svg>`
                       : ''
-                    } ${keyLabel.substring(0, keyLabel.length - 1)}</span><span style='color:var(--red);'>*</span>`
+                    } ${keyLabel.substring(0, keyLabel.length - 1)}</span>${showRequired ? '' : html`<span style='color:var(--red);'>*</span>`}`
                     : html`<span class="key-label" style="display:inline-block; margin-left:-6px;">${(isDeprecated || data['::deprecated'])
                       ? html`<svg viewBox="0 0 10 10" width="10" height="10" style="stroke:var(--red); margin-right:-6px"><path d="M2 2L8 8M2 8L8 2"/></svg>`
                       : ''
@@ -221,7 +238,8 @@ export default class SchemaTable extends LitElement {
                 }
                 ${data['::type'] === 'xxx-of' && dataType === 'array' ? html`<span style="color:var(--primary-color)">ARRAY</span>` : ''} 
               </div>
-              <div class='td key-type' title="${data['::readwrite'] === 'readonly' ? 'Read-Only' : data['::readwrite'] === 'writeonly' ? 'Write-Only' : ''}">
+                ${showRequired === true ? html`<div class="td required">${isRequired}</div>` : ''}
+                <div class='td key-type' title="${data['::readwrite'] === 'readonly' ? 'Read-Only' : data['::readwrite'] === 'writeonly' ? 'Write-Only' : ''}">
                 ${(data['::type'] || '').includes('xxx-of') ? '' : detailObjType}
                 ${data['::readwrite'] === 'readonly' ? ' 🆁' : data['::readwrite'] === 'writeonly' ? ' 🆆' : ''}
               </div>
@@ -231,7 +249,8 @@ export default class SchemaTable extends LitElement {
             ${data['::type'] === 'array' && dataType === 'array'
               ? html`
                 <div class='tr'> 
-                  <div class='td key'></div> 
+                  <div class='td key'></div>
+                  ${showRequired ? html`<div class="td required"></div>` : ''}
                   <div class='td key-type'>
                     ${arrayType && arrayType !== 'object' ? `${dataType} of ${arrayType}` : dataType}
                   </div> 
@@ -310,13 +329,14 @@ export default class SchemaTable extends LitElement {
           }
           ${keyLabel?.endsWith('*')
             ? html`
-              <span class="key-label">${keyLabel.substring(0, keyLabel.length - 1)}</span>
-              <span style='color:var(--red);'>*</span>`
+              <span class="key-label">${keyLabel.substring(0, keyLabel.length - 1)}</span>`
             : key.startsWith('::OPTION')
               ? html`<span class='xxx-of-key'>${keyLabel}</span><span class="xxx-of-descr">${keyDescr}</span>`
               : html`${keyLabel ? html`<span class="key-label"> ${keyLabel}</span>` : html`<span class="xxx-of-descr">${schemaTitle}</span>`}`
           }
         </div>
+        ${showRequired ? html`<div class='td required'>${isRequired}</div>` : ''}
+        
         ${dataTypeHtml}
         <div class='td key-descr' style='font-size: var(--font-size-small)'>
           ${html`<span class="m-markdown-small">

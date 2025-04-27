@@ -68,6 +68,7 @@ export default class RapiDoc extends LitElement {
       fillRequestFieldsWithExample: { type: String, attribute: 'fill-request-fields-with-example' },
       persistAuth: { type: String, attribute: 'persist-auth' },
       onNavTagClick: { type: String, attribute: 'on-nav-tag-click' },
+      customTab: { type: String, attribute: 'custom-tab' },
 
       // Schema Styles
       schemaStyle: { type: String, attribute: 'schema-style' },
@@ -468,11 +469,16 @@ export default class RapiDoc extends LitElement {
     if (!this.theme || !'light, dark,'.includes(`${this.theme},`)) {
       this.theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
     }
-    if (!this.defaultSchemaTab || !'example, schema, model,'.includes(`${this.defaultSchemaTab},`)) {
+    console.log('before', this.defaultSchemaTab);
+    if (!this.defaultSchemaTab || !'example, schema, model, custom,'.includes(`${this.defaultSchemaTab},`)) {
       this.defaultSchemaTab = 'example';
     } else if (this.defaultSchemaTab === 'model') {
       this.defaultSchemaTab = 'schema';
     }
+
+    // customTab 여부의 기본 값
+    if (!this.customTab || !'true, false,'.includes(`${this.customTab},`)) { this.customTab = 'false'; }
+
     if (!this.schemaExpandLevel || this.schemaExpandLevel < 1) { this.schemaExpandLevel = 99999; }
     if (!this.schemaDescriptionExpanded || !'true, false,'.includes(`${this.schemaDescriptionExpanded},`)) { this.schemaDescriptionExpanded = 'false'; }
 
